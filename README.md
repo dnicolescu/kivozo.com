@@ -15,28 +15,84 @@ kivozo.com is meant for:
 
 The site is intentionally broad: a personal sandbox for shipping ideas.
 
-## Repository structure
+## Stack
 
-> Proposed layout — see `docs/architecture.md` (TBD) for discussion.
+- **[Astro](https://astro.build)** static site — zero JS by default, can opt
+  into any framework per project.
+- **[Cloudflare Pages](https://pages.cloudflare.com)** for hosting + CDN.
+- Monorepo: every project lives in one repo, one build, one deploy.
+
+## Repository structure
 
 ```
 /
-├── site/           # Landing page + shared layout (homepage, index of projects)
-├── projects/       # Each subproject lives in its own folder
-│   ├── games/
-│   ├── tools/
-│   ├── dictionaries/
-│   └── experiments/
-├── shared/         # Shared styles, components, assets
-└── docs/           # Notes, decisions, charter
+├── astro.config.mjs
+├── package.json
+├── public/
+│   ├── favicon.svg
+│   ├── _headers, _redirects      # Cloudflare Pages config
+│   └── apps/<slug>/              # standalone static HTML/JS projects
+├── src/
+│   ├── content.config.ts         # project schema
+│   ├── content/projects/<category>/<slug>/index.md   # one folder per project
+│   ├── components/ProjectCard.astro
+│   ├── layouts/BaseLayout.astro
+│   ├── lib/categories.ts         # category metadata
+│   └── pages/
+│       ├── index.astro           # homepage — auto-indexes all projects
+│       ├── about.astro
+│       └── projects/
+│           ├── index.astro       # all projects
+│           ├── [category].astro  # /projects/games, /projects/tools, ...
+│           └── [category]/[...slug].astro   # individual project pages
+└── docs/
+    └── deploy.md                 # Cloudflare Pages + DNS instructions
 ```
 
-Each project under `projects/` is self-contained and can be built/deployed
-independently or as part of the larger static site.
+URL shape: `kivozo.com/projects/<category>/<slug>` (subpaths, not subdomains).
+Standalone apps can live at `kivozo.com/apps/<slug>/` (any HTML/JS, no Astro
+build step required) — just set `href: /apps/<slug>/` in the project's
+frontmatter.
+
+## Quick start
+
+```pwsh
+npm install
+npm run dev      # http://localhost:4321
+npm run build
+npm run preview
+```
+
+## Add a project
+
+Create `src/content/projects/<category>/<slug>/index.md`:
+
+```yaml
+---
+title: My Thing
+description: One-line pitch.
+category: tools        # games | tools | dictionaries | utilities | experiments | random
+status: wip            # idea | wip | live | archived
+featured: false
+tags: [demo]
+created: 2026-06-01
+# href: /apps/my-thing/   # optional — link to standalone app under public/apps/
+---
+Markdown body for the project page.
+```
+
+The homepage and the category page auto-index it on the next build.
+
+## Deploying
+
+See [docs/deploy.md](docs/deploy.md) for Cloudflare Pages setup and how to
+move the `kivozo.com` domain off Squarespace.
 
 ## Status
 
-🚧 Just initialized. Picking hosting + framework next.
+🚧 Just scaffolded. First sample projects live under
+`src/content/projects/experiments/hello-kivozo/` and
+`src/content/projects/tools/coin-flip/`.
 
 ## License
 

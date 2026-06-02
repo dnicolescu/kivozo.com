@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Coin flip · kivozo.com</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { font-family: ui-sans-serif, system-ui, sans-serif; background: #0f1115; color: #e7e9ee;
+           display: grid; place-items: center; min-height: 100vh; margin: 0; }
+    main { text-align: center; }
+    .coin { font-size: 6rem; margin: 1rem 0; }
+    button { font: inherit; padding: 0.6rem 1.2rem; background: #7cc4ff; color: #0f1115;
+             border: 0; border-radius: 8px; cursor: pointer; }
+    a { color: #7cc4ff; }
+  </style>
+</head>
+<body>
+  <main>
+    <p><a href="/">← kivozo.com</a></p>
+    <h1>Coin flip</h1>
+    <div class="coin" id="coin">🪙</div>
+    <p id="result">Press the button.</p>
+    <button id="flip">Flip</button>
+  </main>
+  <script>
+    const coin = document.getElementById('coin');
+    const result = document.getElementById('result');
+    document.getElementById('flip').addEventListener('click', () => {
+      const buf = new Uint8Array(1);
+      crypto.getRandomValues(buf);
+      const heads = (buf[0] & 1) === 0;
+      coin.textContent = heads ? '👑' : '🐢';
+      result.textContent = heads ? 'Heads' : 'Tails';
+    });
+  </script>
+</body>
+</html>

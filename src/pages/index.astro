@@ -1,0 +1,94 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import { CATEGORIES, CATEGORY_KEYS, type CategoryKey } from '../lib/categories.ts';
+
+const all = await getCollection('projects', ({ data }) => data.status !== 'archived');
+
+function hrefFor(entry: typeof all[number]): string {
+  if (entry.data.href) return entry.data.href;
+  return `/projects/${entry.id.replace(/\/index$/, '')}`;
+}
+
+const byCategory = new Map<CategoryKey, typeof all>();
+for (const key of CATEGORY_KEYS) byCategory.set(key, []);
+for (const e of all) byCategory.get(e.data.category)!.push(e);
+
+// Sort each bucket: featured first, then newest
+for (const arr of byCategory.values()) {
+  arr.sort((a, b) => {
+    if (a.data.featured !== b.data.featured) return a.data.featured ? -1 : 1;
+    return +new Date(b.data.created) - +new Date(a.data.created);
+  });
+}
+
+const featured = all.filter((e) => e.data.featured).slice(0, 6);
+---
+
+<BaseLayout>
+  <section class="hero">
+    <h1>kivozo<span class="muted">.com</span></h1>
+    <p class="muted tag">
+      Games · fun tools · dictionaries · utilities · experiments · random projects.
+    </p>
+  </section>
+
+  {featured.length > 0 && (
+    <section>
+      <h2>Featured</h2>
+      <div class="grid">
+        {featured.map((e) => (
+          <ProjectCard
+            title={e.data.title}
+            description={e.data.description}
+            category={e.data.category}
+            status={e.data.status}
+            href={hrefFor(e)}
+          />
+        ))}
+      </div>
+    </section>
+  )}
+
+  {CATEGORY_KEYS.map((key) => {
+    const items = byCategory.get(key)!;
+    if (items.length === 0) return null;
+    const meta = CATEGORIES[key];
+    return (
+      <section>
+        <h2>
+          <a href={`/projects/${key}`}>{meta.emoji} {meta.label}</a>
+          <span class="muted blurb"> — {meta.blurb}</span>
+        </h2>
+        <div class="grid">
+          {items.map((e) => (
+            <ProjectCard
+              title={e.data.title}
+              description={e.data.description}
+              category={e.data.category}
+              status={e.data.status}
+              href={hrefFor(e)}
+            />
+          ))}
+        </div>
+      </section>
+    );
+  })}
+
+  {all.length === 0 && (
+    <section>
+      <p class="muted">No projects yet. Add one in <code>src/content/projects/&lt;category&gt;/&lt;slug&gt;/index.md</code>.</p>
+    </section>
+  )}
+</BaseLayout>
+
+<style>
+  .hero { padding: 1.5rem 0 1rem; }
+  .hero h1 { font-size: 2.5rem; }
+  .tag { margin: 0.25rem 0 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.75rem; }
+  .blurb { font-weight: 400; font-size: 0.95rem; }
+  h2 a { color: var(--fg); }
+  h2 a:hover { color: var(--accent); text-decoration: none; }
+</style>

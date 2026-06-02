@@ -1,0 +1,4 @@
+# Redirects for Cloudflare Pages
+# Format: <source> <destination> <status>
+# Example:
+# /old-tool /tools/new-tool 301

@@ -1,0 +1,47 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProjectCard from '../../components/ProjectCard.astro';
+import { CATEGORIES, CATEGORY_KEYS, type CategoryKey } from '../../lib/categories.ts';
+
+export async function getStaticPaths() {
+  return CATEGORY_KEYS.map((category) => ({ params: { category } }));
+}
+
+const { category } = Astro.params as { category: CategoryKey };
+const meta = CATEGORIES[category];
+
+const items = await getCollection('projects', ({ data }) => data.category === category && data.status !== 'archived');
+items.sort((a, b) => +new Date(b.data.created) - +new Date(a.data.created));
+
+function hrefFor(entry: typeof items[number]): string {
+  if (entry.data.href) return entry.data.href;
+  return `/projects/${entry.id.replace(/\/index$/, '')}`;
+}
+---
+
+<BaseLayout title={`${meta.label} · kivozo.com`} description={meta.blurb}>
+  <p><a href="/projects">← all projects</a></p>
+  <h1>{meta.emoji} {meta.label}</h1>
+  <p class="muted">{meta.blurb}</p>
+
+  {items.length === 0 ? (
+    <p class="muted">Nothing here yet.</p>
+  ) : (
+    <div class="grid">
+      {items.map((e) => (
+        <ProjectCard
+          title={e.data.title}
+          description={e.data.description}
+          category={e.data.category}
+          status={e.data.status}
+          href={hrefFor(e)}
+        />
+      ))}
+    </div>
+  )}
+</BaseLayout>
+
+<style>
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.75rem; margin-top: 1rem; }
+</style>

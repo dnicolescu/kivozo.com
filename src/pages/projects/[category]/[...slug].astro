@@ -1,0 +1,47 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { CATEGORIES, type CategoryKey } from '../../../lib/categories.ts';
+
+export async function getStaticPaths() {
+  const all = await getCollection('projects');
+  return all
+    .filter((e) => !e.data.href) // external/standalone projects don't get a generated page
+    .map((entry) => {
+      // entry.id looks like "games/hello-game/index"
+      const parts = entry.id.replace(/\/index$/, '').split('/');
+      const [category, ...rest] = parts;
+      const slug = rest.join('/');
+      return {
+        params: { category, slug },
+        props: { entry },
+      };
+    });
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const cat = CATEGORIES[entry.data.category as CategoryKey];
+---
+
+<BaseLayout title={`${entry.data.title} · kivozo.com`} description={entry.data.description}>
+  <p>
+    <a href={`/projects/${entry.data.category}`}>← {cat.emoji} {cat.label}</a>
+  </p>
+  <h1>{entry.data.title}</h1>
+  <p class="muted">{entry.data.description}</p>
+  <p class="muted small">
+    {entry.data.status} ·
+    created {new Date(entry.data.created).toISOString().slice(0, 10)}
+    {entry.data.tags.length > 0 && <> · {entry.data.tags.join(', ')}</>}
+  </p>
+
+  <article>
+    <Content />
+  </article>
+</BaseLayout>
+
+<style>
+  .small { font-size: 0.85rem; }
+  article { margin-top: 1.5rem; }
+</style>

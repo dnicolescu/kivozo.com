@@ -1,0 +1,33 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProjectCard from '../../components/ProjectCard.astro';
+
+const all = await getCollection('projects', ({ data }) => data.status !== 'archived');
+all.sort((a, b) => +new Date(b.data.created) - +new Date(a.data.created));
+
+function hrefFor(entry: typeof all[number]): string {
+  if (entry.data.href) return entry.data.href;
+  return `/projects/${entry.id.replace(/\/index$/, '')}`;
+}
+---
+
+<BaseLayout title="All projects · kivozo.com">
+  <h1>All projects</h1>
+  <p class="muted">{all.length} project{all.length === 1 ? '' : 's'}.</p>
+  <div class="grid">
+    {all.map((e) => (
+      <ProjectCard
+        title={e.data.title}
+        description={e.data.description}
+        category={e.data.category}
+        status={e.data.status}
+        href={hrefFor(e)}
+      />
+    ))}
+  </div>
+</BaseLayout>
+
+<style>
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.75rem; margin-top: 1rem; }
+</style>

@@ -1,0 +1,78 @@
+---
+export interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'kivozo.com',
+  description = 'Games, tools, dictionaries, utilities, experiments, and random projects.',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <header class="site-header">
+      <a href="/" class="brand">kivozo<span>.com</span></a>
+      <nav>
+        <a href="/projects">All projects</a>
+        <a href="/about">About</a>
+      </nav>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <p>
+        © {new Date().getFullYear()} kivozo.com ·
+        <a href="https://github.com/">source</a>
+      </p>
+    </footer>
+
+    <style is:global>
+      :root {
+        --bg: #0f1115;
+        --fg: #e7e9ee;
+        --muted: #9aa3b2;
+        --card: #171a21;
+        --border: #242936;
+        --accent: #7cc4ff;
+        --accent-warm: #ffb86b;
+        --radius: 10px;
+        --maxw: 980px;
+        font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      main { max-width: var(--maxw); margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+      .site-header {
+        display: flex; justify-content: space-between; align-items: center;
+        max-width: var(--maxw); margin: 0 auto; padding: 1.25rem;
+        border-bottom: 1px solid var(--border);
+      }
+      .site-header .brand { color: var(--fg); font-weight: 700; font-size: 1.25rem; }
+      .site-header .brand span { color: var(--muted); font-weight: 400; }
+      .site-header nav a { margin-left: 1rem; color: var(--muted); }
+      .site-header nav a:hover { color: var(--fg); text-decoration: none; }
+      .site-footer {
+        max-width: var(--maxw); margin: 2rem auto 0; padding: 1.25rem;
+        border-top: 1px solid var(--border); color: var(--muted); font-size: 0.9rem;
+      }
+      h1, h2, h3 { line-height: 1.2; }
+      h1 { font-size: 2rem; margin: 0 0 0.5rem; }
+      h2 { font-size: 1.35rem; margin: 2rem 0 0.75rem; }
+      p { line-height: 1.6; }
+      .muted { color: var(--muted); }
+    </style>
+  </body>
+</html>
