@@ -318,19 +318,31 @@ function buildLetterMap() {
     b.className = 'ltr';
     b.dataset.letter = c;
     b.textContent = c;
-    b.title = `${c} — click to require, click again to forbid, again to clear`;
-    b.addEventListener('click', () => cycleLetter(c, b));
+    b.title = `${c} — left-click: require → forbid → clear · right-click: reverse`;
+    b.addEventListener('click', () => cycleLetter(c, b, +1));
+    b.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      cycleLetter(c, b, -1);
+    });
     frag.appendChild(b);
   }
   els.letters.appendChild(frag);
 }
 
-function cycleLetter(c, btn) {
+function cycleLetter(c, btn, dir = +1) {
+  // Forward cycle: neutral → req → forb → neutral
+  // Reverse cycle: neutral → forb → req → neutral
   const cur = state.letterState.get(c);
   let next;
-  if (!cur) next = 'req';
-  else if (cur === 'req') next = 'forb';
-  else next = null;
+  if (dir >= 0) {
+    if (!cur) next = 'req';
+    else if (cur === 'req') next = 'forb';
+    else next = null;
+  } else {
+    if (!cur) next = 'forb';
+    else if (cur === 'forb') next = 'req';
+    else next = null;
+  }
 
   btn.classList.remove('req', 'forb');
   if (next) {
