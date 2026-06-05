@@ -65,7 +65,10 @@ main {
 .ghost.small { font-size: 0.8rem; padding: 0.1rem 0.4rem; }
 
 .letter-map { border: 1px solid var(--border); border-radius: var(--radius); padding: 0.5rem 0.75rem 0.75rem; }
-.letter-map legend { padding: 0 0.4rem; color: var(--muted); font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.5rem; }
+.letter-map legend { padding: 0 0.4rem; color: var(--muted); font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.legend-help { display: inline-flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.legend-help .hint { white-space: nowrap; }
+.legend-help .sep { color: var(--border-strong); opacity: 0.6; }
 .legend-help em { font-style: normal; }
 .legend-help em.req { color: var(--good); }
 .legend-help em.forb { color: var(--bad); text-decoration: line-through; }
