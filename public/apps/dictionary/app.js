@@ -23,6 +23,10 @@ const els = {
   minLenVal: document.getElementById('min-len-val'),
   maxLenVal: document.getElementById('max-len-val'),
   clearLength: document.getElementById('clear-length'),
+  rangeDual: document.getElementById('range-dual'),
+  rangeFill: document.getElementById('range-fill'),
+  minBubble: document.getElementById('min-bubble'),
+  maxBubble: document.getElementById('max-bubble'),
   sortButtons: Array.from(document.querySelectorAll('.sort-btn')),
   sidebar: document.getElementById('sidebar-index'),
 };
@@ -89,6 +93,7 @@ async function load() {
   els.maxLen.max = String(maxLen);
   els.maxLen.value = String(maxLen);
   els.maxLenVal.textContent = String(maxLen);
+  updateRangeVisuals();
 
   const ms = (performance.now() - t0).toFixed(0);
   const droppedNote = rawCount - words.length > 0 ? ` (filtered ${rawCount - words.length} non-ASCII)` : '';
@@ -388,6 +393,7 @@ function onLengthInput() {
   state.maxLen = mx;
   els.minLenVal.textContent = String(mn);
   els.maxLenVal.textContent = String(mx);
+  updateRangeVisuals();
   scheduleCompute();
 }
 
@@ -398,7 +404,33 @@ function resetLength() {
   els.maxLen.value = String(state.maxLenCap);
   els.minLenVal.textContent = '1';
   els.maxLenVal.textContent = String(state.maxLenCap);
+  updateRangeVisuals();
   scheduleCompute();
+}
+
+/** Compute the percentage position (0..100) of a slider value within its range. */
+function rangePct(v) {
+  const min = 1;
+  const max = state.maxLenCap;
+  if (max <= min) return 0;
+  return ((v - min) / (max - min)) * 100;
+}
+
+/** Reposition the filled segment, the bubbles, and the input z-index so both
+ *  thumbs stay reachable when they crowd one end. */
+function updateRangeVisuals() {
+  const pctMin = rangePct(state.minLen);
+  const pctMax = rangePct(state.maxLen);
+  els.rangeFill.style.left = pctMin + '%';
+  els.rangeFill.style.right = (100 - pctMax) + '%';
+  els.minBubble.style.left = pctMin + '%';
+  els.maxBubble.style.left = pctMax + '%';
+  els.minBubble.textContent = String(state.minLen);
+  els.maxBubble.textContent = String(state.maxLen);
+  // When the min thumb is past the midpoint, raise its z-index so it stays
+  // grabbable; otherwise let the max thumb sit on top (default).
+  els.minLen.style.zIndex = pctMin > 50 ? '4' : '3';
+  els.maxLen.style.zIndex = pctMax < 50 ? '4' : '3';
 }
 
 // ---------- Sidebar (first-letter index) ----------
@@ -460,6 +492,24 @@ function scheduleCompute() {
   computeTimer = setTimeout(() => { computeTimer = null; compute(); }, 60);
 }
 
+/** Light up the corresponding bubble while the user is interacting with a slider. */
+function wireBubbleHighlight(input, bubble) {
+  const on = () => {
+    els.rangeDual.classList.add('dragging');
+    for (const b of [els.minBubble, els.maxBubble]) b.classList.remove('active');
+    bubble.classList.add('active');
+  };
+  const off = () => {
+    els.rangeDual.classList.remove('dragging');
+    bubble.classList.remove('active');
+  };
+  input.addEventListener('pointerdown', on);
+  input.addEventListener('focus', on);
+  input.addEventListener('pointerup', off);
+  input.addEventListener('pointercancel', off);
+  input.addEventListener('blur', off);
+}
+
 function wire() {
   els.query.addEventListener('input', () => {
     state.query = els.query.value;
@@ -482,6 +532,8 @@ function wire() {
   els.minLen.addEventListener('input', onLengthInput);
   els.maxLen.addEventListener('input', onLengthInput);
   els.clearLength.addEventListener('click', resetLength);
+  wireBubbleHighlight(els.minLen, els.minBubble);
+  wireBubbleHighlight(els.maxLen, els.maxBubble);
   els.viewport.addEventListener('scroll', () => {
     if (state.results.length > 0) {
       renderWindow();

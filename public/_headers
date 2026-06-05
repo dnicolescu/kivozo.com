@@ -5,3 +5,8 @@
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: interest-cohort=()
+
+# Static data files for the dictionary apps — change rarely, browser/CDN can keep
+# them for a day and refresh in the background.
+/apps/dictionary/data/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800

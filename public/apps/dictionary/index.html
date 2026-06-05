@@ -34,6 +34,8 @@
           autocapitalize="off"
           autocorrect="off"
           spellcheck="false"
+          inputmode="search"
+          enterkeyhint="search"
           placeholder="type letters…"
           aria-label="Search text"
         />
@@ -52,14 +54,21 @@
       <fieldset class="length-filter" aria-label="Length filter">
         <legend>
           length
-          <span class="legend-help">drag to set min/max letters</span>
+          <span class="legend-help">drag the handles to set min/max letters</span>
           <button id="clear-length" class="ghost small" type="button">reset</button>
         </legend>
-        <div class="length-row">
-          <label class="length-label">min <span id="min-len-val">1</span></label>
-          <input id="min-len" type="range" min="1" max="30" value="1" />
-          <label class="length-label">max <span id="max-len-val">30</span></label>
-          <input id="max-len" type="range" min="1" max="30" value="30" />
+        <div class="range-dual" id="range-dual">
+          <div class="range-track" aria-hidden="true">
+            <div class="range-fill" id="range-fill"></div>
+          </div>
+          <input id="min-len" type="range" min="1" max="30" value="1" aria-label="Minimum word length" />
+          <input id="max-len" type="range" min="1" max="30" value="30" aria-label="Maximum word length" />
+          <div class="range-bubble" id="min-bubble" aria-hidden="true">1</div>
+          <div class="range-bubble" id="max-bubble" aria-hidden="true">30</div>
+        </div>
+        <div class="range-legend">
+          <span>min <strong id="min-len-val">1</strong></span>
+          <span>max <strong id="max-len-val">30</strong></span>
         </div>
       </fieldset>
 
