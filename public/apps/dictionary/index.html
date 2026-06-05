@@ -20,11 +20,9 @@
       <div class="mode" role="tablist" aria-label="Search mode">
         <button id="mode-prefix" class="mode-btn active" role="tab" aria-selected="true">
           <span class="mode-label">starts with</span>
-          <span class="mode-hint">A → Z</span>
         </button>
         <button id="mode-suffix" class="mode-btn" role="tab" aria-selected="false">
           <span class="mode-label">ends with</span>
-          <span class="mode-hint">Z → A by ending</span>
         </button>
       </div>
 
@@ -51,6 +49,28 @@
         <div id="letters" class="letters"></div>
       </fieldset>
 
+      <fieldset class="length-filter" aria-label="Length filter">
+        <legend>
+          length
+          <span class="legend-help">drag to set min/max letters</span>
+          <button id="clear-length" class="ghost small" type="button">reset</button>
+        </legend>
+        <div class="length-row">
+          <label class="length-label">min <span id="min-len-val">1</span></label>
+          <input id="min-len" type="range" min="1" max="30" value="1" />
+          <label class="length-label">max <span id="max-len-val">30</span></label>
+          <input id="max-len" type="range" min="1" max="30" value="30" />
+        </div>
+      </fieldset>
+
+      <div class="sort-row">
+        <span class="sort-label-text">sort:</span>
+        <div class="sort" role="radiogroup" aria-label="Sort order">
+          <button id="sort-az" class="sort-btn active" role="radio" aria-checked="true" data-sort="az">A → Z</button>
+          <button id="sort-za" class="sort-btn" role="radio" aria-checked="false" data-sort="za">Z → A</button>
+        </div>
+      </div>
+
       <div class="active-filters" id="active-filters" aria-live="polite"></div>
     </section>
 
@@ -59,9 +79,12 @@
         <span id="count">—</span>
         <span class="muted" id="sort-label"></span>
       </div>
-      <div id="viewport" class="viewport" tabindex="0" aria-label="Word list">
-        <div id="spacer" class="spacer"></div>
-        <div id="rows" class="rows"></div>
+      <div class="results-body">
+        <div id="viewport" class="viewport" tabindex="0" aria-label="Word list">
+          <div id="spacer" class="spacer"></div>
+          <div id="rows" class="rows"></div>
+        </div>
+        <nav id="sidebar-index" class="sidebar-index" aria-label="Jump to letter"></nav>
       </div>
     </section>
   </main>

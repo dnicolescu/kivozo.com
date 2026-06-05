@@ -18,6 +18,13 @@ const els = {
   rows: document.getElementById('rows'),
   modePrefix: document.getElementById('mode-prefix'),
   modeSuffix: document.getElementById('mode-suffix'),
+  minLen: document.getElementById('min-len'),
+  maxLen: document.getElementById('max-len'),
+  minLenVal: document.getElementById('min-len-val'),
+  maxLenVal: document.getElementById('max-len-val'),
+  clearLength: document.getElementById('clear-length'),
+  sortButtons: Array.from(document.querySelectorAll('.sort-btn')),
+  sidebar: document.getElementById('sidebar-index'),
 };
 
 const ALPHA = 'abcdefghijklmnopqrstuvwxyz';
@@ -33,8 +40,20 @@ const state = {
   query: '',
   /** @type {Map<string, 'req'|'forb'>} per-letter state */
   letterState: new Map(),
+  /** @type {number} inclusive */
+  minLen: 1,
+  /** @type {number} inclusive */
+  maxLen: 30,
+  /** @type {number} highest word length present in the dictionary (set on load) */
+  maxLenCap: 30,
+  /** @type {'az'|'za'} display sort order */
+  sort: 'az',
   /** @type {string[]} current filtered results (always shown as ORIGINAL words) */
   results: [],
+  /** @type {Int32Array} per-letter (a..z) starting index into results; -1 if absent */
+  firstLetterIdx: new Int32Array(26),
+  /** @type {string|null} which sidebar letter is currently in view */
+  activeLetter: null,
 };
 
 // ---------- Load ----------
@@ -45,18 +64,35 @@ async function load() {
   const res = await fetch(DATA_URL);
   if (!res.ok) throw new Error(`Failed to fetch dictionary (${res.status})`);
   const text = await res.text();
-  const words = text.split(/\r?\n/).filter(Boolean);
+  const rawCount = (text.match(/\n/g) || []).length + 1;
+  // Keep only lowercase a–z words. The shipped engmix list includes a handful of
+  // accented entries (e.g. "époque", "émigrés") which render as boxes in many
+  // fonts and break sort/binary-search assumptions; drop them.
+  const words = text.split(/\r?\n/).filter((w) => w && /^[a-z]+$/.test(w));
   // engmix is already sorted ASCII A→Z; trust it.
   state.asc = words;
   // For suffix mode: store the reversed strings, sorted A→Z.
   // Then suffix search becomes a prefix search of the reversed query.
   const rev = new Array(words.length);
-  for (let i = 0; i < words.length; i++) rev[i] = reverseStr(words[i]);
+  let maxLen = 1;
+  for (let i = 0; i < words.length; i++) {
+    rev[i] = reverseStr(words[i]);
+    if (words[i].length > maxLen) maxLen = words[i].length;
+  }
   rev.sort();
   state.rev = rev;
 
+  // Tighten the length sliders to the actual range present in the dictionary.
+  state.maxLenCap = maxLen;
+  state.maxLen = maxLen;
+  els.minLen.max = String(maxLen);
+  els.maxLen.max = String(maxLen);
+  els.maxLen.value = String(maxLen);
+  els.maxLenVal.textContent = String(maxLen);
+
   const ms = (performance.now() - t0).toFixed(0);
-  els.stats.textContent = `${words.length.toLocaleString()} words · loaded in ${ms}ms`;
+  const droppedNote = rawCount - words.length > 0 ? ` (filtered ${rawCount - words.length} non-ASCII)` : '';
+  els.stats.textContent = `${words.length.toLocaleString()} words · loaded in ${ms}ms${droppedNote}`;
 }
 
 function reverseStr(s) {
@@ -111,21 +147,25 @@ function compute() {
     to = upperBoundOfPrefix(arr, key);
   }
 
-  // Letter constraints
+  // Letter & length constraints
   const required = [];
   const forbidden = new Set();
   for (const [ltr, st] of state.letterState) {
     if (st === 'req') required.push(ltr);
     else if (st === 'forb') forbidden.add(ltr);
   }
+  const minLen = state.minLen;
+  const maxLen = state.maxLen;
 
   const out = [];
   outer: for (let i = from; i < to; i++) {
-    // arr[i] is reversed in suffix mode — but letter membership is the same in either direction,
-    // so we can apply letter filters before un-reversing for cheaper output.
+    // arr[i] is reversed in suffix mode — but letter membership and length are the same
+    // in either direction, so we can filter before un-reversing.
     const w = arr[i];
+    const L = w.length;
+    if (L < minLen || L > maxLen) continue;
     if (forbidden.size) {
-      for (let k = 0; k < w.length; k++) if (forbidden.has(w[k])) continue outer;
+      for (let k = 0; k < L; k++) if (forbidden.has(w[k])) continue outer;
     }
     if (required.length) {
       for (let r = 0; r < required.length; r++) if (w.indexOf(required[r]) === -1) continue outer;
@@ -133,8 +173,48 @@ function compute() {
     out.push(isSuffix ? reverseStr(w) : w);
   }
 
+  // Sort for display. In prefix mode the slice is already A→Z; in suffix mode
+  // it comes back roughly grouped by ending, so we always sort explicitly.
+  sortResults(out, state.sort);
+
   state.results = out;
+  buildFirstLetterIndex();
   render();
+}
+
+function sortResults(arr, sort) {
+  if (sort === 'az') {
+    arr.sort();
+  } else {
+    // 'za' — descending lexicographic
+    arr.sort((a, b) => (a < b ? 1 : a > b ? -1 : 0));
+  }
+}
+
+function buildFirstLetterIndex() {
+  // For each letter a..z, store the first index in `state.results` whose first
+  // letter is >= that letter (when ascending) or <= (when descending).
+  // Empty letters get -1.
+  const idx = state.firstLetterIdx;
+  idx.fill(-1);
+  const n = state.results.length;
+  if (n === 0) return;
+  if (state.sort === 'az') {
+    let cursor = 0;
+    for (let li = 0; li < 26; li++) {
+      const ch = String.fromCharCode(97 + li);
+      while (cursor < n && state.results[cursor][0] < ch) cursor++;
+      if (cursor < n && state.results[cursor][0] === ch) idx[li] = cursor;
+    }
+  } else {
+    // descending: scan from end of alphabet down
+    let cursor = 0;
+    for (let li = 25; li >= 0; li--) {
+      const ch = String.fromCharCode(97 + li);
+      while (cursor < n && state.results[cursor][0] > ch) cursor++;
+      if (cursor < n && state.results[cursor][0] === ch) idx[li] = cursor;
+    }
+  }
 }
 
 // ---------- Render ----------
@@ -146,7 +226,7 @@ function render() {
   els.count.textContent = n === 0
     ? 'no matches'
     : `${n.toLocaleString()} ${n === 1 ? 'word' : 'words'}`;
-  els.sortLabel.textContent = state.mode === 'prefix' ? 'sorted A → Z' : 'sorted by ending';
+  els.sortLabel.textContent = state.sort === 'az' ? 'sorted A → Z' : 'sorted Z → A';
 
   // Virtualized list
   els.spacer.style.height = (n * ROW_H) + 'px';
@@ -154,14 +234,17 @@ function render() {
     els.rows.innerHTML = '';
     const empty = document.createElement('div');
     empty.className = 'row empty';
-    empty.textContent = state.query || state.letterState.size
+    empty.textContent = state.query || state.letterState.size || state.minLen > 1 || state.maxLen < state.maxLenCap
       ? 'No words match these filters.'
       : 'Type to search, or click letters below.';
     els.rows.appendChild(empty);
+    renderSidebar();
     return;
   }
 
+  renderSidebar();
   renderWindow();
+  updateSidebarActive();
 }
 
 function renderWindow() {
@@ -209,6 +292,9 @@ function renderActiveFilters() {
   }
   for (const [ltr, st] of state.letterState) {
     parts.push(`<span class="chip ${st}">${ltr}</span>`);
+  }
+  if (state.minLen > 1 || state.maxLen < state.maxLenCap) {
+    parts.push(`<span class="chip">length ${state.minLen}\u2013${state.maxLen}</span>`);
   }
   els.activeFilters.innerHTML = parts.join(' ');
 }
@@ -273,6 +359,99 @@ function setMode(m) {
   scheduleCompute();
 }
 
+// ---------- Sort ----------
+
+function setSort(s) {
+  if (state.sort === s) return;
+  state.sort = s;
+  for (const b of els.sortButtons) {
+    const on = b.dataset.sort === s;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-checked', String(on));
+  }
+  els.viewport.scrollTop = 0;
+  scheduleCompute();
+}
+
+// ---------- Length ----------
+
+function onLengthInput() {
+  let mn = +els.minLen.value;
+  let mx = +els.maxLen.value;
+  // Keep them in order: if the user drags one past the other, push the other.
+  if (mn > mx) {
+    // Whichever moved last wins; figure that out by comparing to state.
+    if (mn !== state.minLen) { mx = mn; els.maxLen.value = String(mx); }
+    else { mn = mx; els.minLen.value = String(mn); }
+  }
+  state.minLen = mn;
+  state.maxLen = mx;
+  els.minLenVal.textContent = String(mn);
+  els.maxLenVal.textContent = String(mx);
+  scheduleCompute();
+}
+
+function resetLength() {
+  state.minLen = 1;
+  state.maxLen = state.maxLenCap;
+  els.minLen.value = '1';
+  els.maxLen.value = String(state.maxLenCap);
+  els.minLenVal.textContent = '1';
+  els.maxLenVal.textContent = String(state.maxLenCap);
+  scheduleCompute();
+}
+
+// ---------- Sidebar (first-letter index) ----------
+
+function buildSidebar() {
+  const frag = document.createDocumentFragment();
+  for (const c of ALPHA) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.dataset.letter = c;
+    b.textContent = c;
+    b.title = `jump to ${c.toUpperCase()}`;
+    b.addEventListener('click', () => jumpToLetter(c));
+    frag.appendChild(b);
+  }
+  els.sidebar.appendChild(frag);
+}
+
+function renderSidebar() {
+  // Letters present in current results are clickable; absent letters are dimmed.
+  // Order is always A→Z visually so muscle memory works.
+  for (const b of els.sidebar.children) {
+    const li = b.dataset.letter.charCodeAt(0) - 97;
+    const present = state.firstLetterIdx[li] !== -1;
+    b.classList.toggle('empty', !present);
+    b.disabled = !present;
+  }
+}
+
+function jumpToLetter(c) {
+  const li = c.charCodeAt(0) - 97;
+  const start = state.firstLetterIdx[li];
+  if (start < 0) return;
+  els.viewport.scrollTop = start * ROW_H;
+}
+
+function updateSidebarActive() {
+  const n = state.results.length;
+  if (n === 0) { setActiveLetter(null); return; }
+  const topRow = Math.floor(els.viewport.scrollTop / ROW_H);
+  const first = state.results[Math.min(topRow, n - 1)];
+  if (!first) { setActiveLetter(null); return; }
+  setActiveLetter(first[0]);
+}
+
+function setActiveLetter(c) {
+  if (state.activeLetter === c) return;
+  state.activeLetter = c;
+  for (const b of els.sidebar.children) {
+    b.classList.toggle('active', c !== null && b.dataset.letter === c);
+  }
+}
+
 // ---------- Debounce / wiring ----------
 
 let computeTimer = null;
@@ -297,8 +476,17 @@ function wire() {
   els.clearLetters.addEventListener('click', resetLetters);
   els.modePrefix.addEventListener('click', () => setMode('prefix'));
   els.modeSuffix.addEventListener('click', () => setMode('suffix'));
+  for (const b of els.sortButtons) {
+    b.addEventListener('click', () => setSort(b.dataset.sort));
+  }
+  els.minLen.addEventListener('input', onLengthInput);
+  els.maxLen.addEventListener('input', onLengthInput);
+  els.clearLength.addEventListener('click', resetLength);
   els.viewport.addEventListener('scroll', () => {
-    if (state.results.length > 0) renderWindow();
+    if (state.results.length > 0) {
+      renderWindow();
+      updateSidebarActive();
+    }
   }, { passive: true });
   window.addEventListener('resize', () => {
     if (state.results.length > 0) renderWindow();
@@ -309,6 +497,7 @@ function wire() {
 
 (async function main() {
   buildLetterMap();
+  buildSidebar();
   wire();
   try {
     await load();
