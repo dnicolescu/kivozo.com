@@ -133,6 +133,25 @@
     }
     .reset:hover { color: var(--fg); border-color: var(--accent); }
 
+    .streaks {
+      margin-top: 0.75rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.5rem 0.85rem;
+      display: flex; flex-direction: column; gap: 0.3rem;
+      font-variant-numeric: tabular-nums;
+      text-align: left;
+    }
+    .streak-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      font-size: 0.85rem;
+    }
+    .streak-key { color: var(--muted); }
+    .streak-val { color: var(--fg); font-weight: 700; min-width: 2.5em; text-align: right; }
+    .streak-row.current .streak-key { color: var(--fg); }
+    .streak-row.current .streak-val { color: var(--accent); }
+
     .note { color: var(--muted); font-size: 0.75rem; margin-top: 1.25rem; }
   </style>
 </head>
@@ -143,8 +162,8 @@
 
     <div class="stage" id="stage">
       <div class="coin" id="coin">
-        <div class="face front">👑</div>
-        <div class="face back">🐢</div>
+        <div class="face front">🗿</div>
+        <div class="face back">🦝</div>
       </div>
     </div>
 
@@ -153,12 +172,12 @@
 
     <div class="tally" aria-label="Session tally">
       <div class="cell">
-        <span class="label">Heads 👑</span>
+        <span class="label">Head 🗿</span>
         <span class="value" id="t-heads">0</span>
         <span class="pct" id="p-heads">—</span>
       </div>
       <div class="cell">
-        <span class="label">Tails 🐢</span>
+        <span class="label">Tail 🦝</span>
         <span class="value" id="t-tails">0</span>
         <span class="pct" id="p-tails">—</span>
       </div>
@@ -166,6 +185,25 @@
         <span class="label">Total</span>
         <span class="value" id="t-total">0</span>
         <button class="reset" id="reset" type="button">reset</button>
+      </div>
+    </div>
+
+    <div class="streaks" aria-label="Longest streaks">
+      <div class="streak-row">
+        <span class="streak-key">longest 🗿 in a row</span>
+        <span class="streak-val" id="s-heads">0</span>
+      </div>
+      <div class="streak-row">
+        <span class="streak-key">longest 🦝 in a row</span>
+        <span class="streak-val" id="s-tails">0</span>
+      </div>
+      <div class="streak-row">
+        <span class="streak-key">longest 🗿↔️🦝 alternating</span>
+        <span class="streak-val" id="s-alt">0</span>
+      </div>
+      <div class="streak-row current">
+        <span class="streak-key">current run</span>
+        <span class="streak-val" id="s-current">—</span>
       </div>
     </div>
 
@@ -182,13 +220,26 @@
     const tTotal  = document.getElementById('t-total');
     const pHeads  = document.getElementById('p-heads');
     const pTails  = document.getElementById('p-tails');
+    const sHeads  = document.getElementById('s-heads');
+    const sTails  = document.getElementById('s-tails');
+    const sAlt    = document.getElementById('s-alt');
+    const sCurrent = document.getElementById('s-current');
     const resetBtn = document.getElementById('reset');
 
+    const FACE_EMOJI = { H: '🗿', T: '🦝' };
+    const FACE_LABEL = { H: 'Head', T: 'Tail' };
+
     // Cumulative rotation so each flip spins forward (no rewind).
-    // Front face (Heads/👑) is at angle 0; back face (Tails/🐢) at 180.
+    // Front face (Head/🗿) is at angle 0; back face (Tail/🦝) at 180.
     let rotation = 0;
     let lastResult = null;       // 'H' | 'T' | null
     const counts = { H: 0, T: 0 };
+    // Streaks
+    let runFace = null;          // face of current consecutive run
+    let runLen = 0;              // length of current consecutive run
+    let altLen = 0;              // length of current alternating run
+    const maxRun = { H: 0, T: 0 };
+    let maxAlt = 0;
     let flipping = false;
     const DURATION = 1100;
 
@@ -204,6 +255,40 @@
         pHeads.textContent = ((counts.H / total) * 100).toFixed(0) + '%';
         pTails.textContent = ((counts.T / total) * 100).toFixed(0) + '%';
       }
+      sHeads.textContent = maxRun.H;
+      sTails.textContent = maxRun.T;
+      sAlt.textContent = maxAlt;
+      if (total === 0) {
+        sCurrent.textContent = '—';
+      } else if (runLen >= 2) {
+        sCurrent.textContent = `${runLen}× ${FACE_EMOJI[runFace]}`;
+      } else if (altLen >= 2) {
+        sCurrent.textContent = `${altLen}× alternating`;
+      } else {
+        sCurrent.textContent = `1× ${FACE_EMOJI[runFace]}`;
+      }
+    }
+
+    function recordFlip(code) {
+      // Consecutive run of the same face
+      if (runFace === code) {
+        runLen++;
+      } else {
+        runFace = code;
+        runLen = 1;
+      }
+      if (runLen > maxRun[code]) maxRun[code] = runLen;
+
+      // Alternating run (each flip differs from the previous)
+      if (lastResult !== null && lastResult !== code) {
+        altLen = altLen >= 2 ? altLen + 1 : 2;
+      } else {
+        altLen = 1;
+      }
+      if (altLen > maxAlt) maxAlt = altLen;
+
+      counts[code]++;
+      lastResult = code;
     }
 
     function flip() {
@@ -234,10 +319,9 @@
 
       setTimeout(() => {
         const sameAsLast = lastResult === code && counts.H + counts.T > 0;
-        const label = heads ? 'Heads' : 'Tails';
+        const label = FACE_LABEL[code];
         result.innerHTML = `${label}${sameAsLast ? ' <span class="same">again!</span>' : ''}`;
-        counts[code]++;
-        lastResult = code;
+        recordFlip(code);
         updateTally();
         flipping = false;
         flipBtn.disabled = false;
@@ -248,6 +332,10 @@
     resetBtn.addEventListener('click', () => {
       counts.H = 0; counts.T = 0;
       lastResult = null;
+      runFace = null; runLen = 0;
+      altLen = 0;
+      maxRun.H = 0; maxRun.T = 0;
+      maxAlt = 0;
       updateTally();
       result.textContent = 'Press the button.';
     });

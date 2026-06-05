@@ -1,6 +1,6 @@
 ---
 title: Coin flip
-description: A genuinely random coin flip. No tracking, no nonsense.
+description: Crypto-random coin flip with a 3D spin, session tally, and streak tracker.
 category: tools
 status: live
 href: /apps/coin-flip/
