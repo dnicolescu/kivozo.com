@@ -5,34 +5,254 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Coin flip · kivozo.com</title>
   <style>
-    :root { color-scheme: dark; }
-    body { font-family: ui-sans-serif, system-ui, sans-serif; background: #0f1115; color: #e7e9ee;
-           display: grid; place-items: center; min-height: 100vh; margin: 0; }
-    main { text-align: center; }
-    .coin { font-size: 6rem; margin: 1rem 0; }
-    button { font: inherit; padding: 0.6rem 1.2rem; background: #7cc4ff; color: #0f1115;
-             border: 0; border-radius: 8px; cursor: pointer; }
-    a { color: #7cc4ff; }
+    :root {
+      color-scheme: dark;
+      --bg: #0f1115;
+      --fg: #e7e9ee;
+      --muted: #9aa3b2;
+      --card: #171a21;
+      --border: #242936;
+      --accent: #7cc4ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg); color: var(--fg);
+      display: grid; place-items: center; min-height: 100vh; margin: 0;
+      padding: 1rem;
+    }
+    main { text-align: center; max-width: 24rem; width: 100%; }
+    .brand { color: var(--muted); font-size: 0.9rem; }
+    .brand a { color: var(--muted); text-decoration: none; }
+    .brand a:hover { color: var(--fg); }
+    h1 { margin: 0.5rem 0 1.5rem; font-size: 1.5rem; }
+
+    /* Coin stage holds the 3D rotated card */
+    .stage {
+      position: relative;
+      perspective: 1200px;
+      width: 160px; height: 160px;
+      margin: 0 auto 1.5rem;
+    }
+    .coin {
+      position: relative;
+      width: 100%; height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 1100ms cubic-bezier(.2,.7,.2,1);
+      will-change: transform;
+    }
+    .face {
+      position: absolute; inset: 0;
+      display: grid; place-items: center;
+      border-radius: 50%;
+      backface-visibility: hidden;
+      background: radial-gradient(circle at 30% 25%, #ffd97a, #d9a534 60%, #8a6a1a);
+      box-shadow:
+        inset 0 -8px 16px rgba(0,0,0,0.35),
+        inset 0 4px 8px rgba(255,255,255,0.25),
+        0 12px 24px rgba(0,0,0,0.45);
+      font-size: 4.5rem;
+      line-height: 1;
+      user-select: none;
+    }
+    .face.back { transform: rotateY(180deg); }
+
+    /* Flash ring so a repeat result still feels like a new event */
+    .stage::after {
+      content: '';
+      position: absolute; inset: -10px;
+      border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(124, 196, 255, 0);
+      pointer-events: none;
+      transition: box-shadow 600ms ease-out;
+    }
+    .stage.flash::after {
+      box-shadow: 0 0 32px 8px rgba(124, 196, 255, 0.55);
+      transition: box-shadow 0ms;
+    }
+
+    .result {
+      font-size: 1.4rem; font-weight: 700;
+      min-height: 1.6em;
+      letter-spacing: 0.02em;
+    }
+    .result .same {
+      display: inline-block;
+      margin-left: 0.5em;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--accent);
+      background: rgba(124,196,255,0.15);
+      border: 1px solid rgba(124,196,255,0.4);
+      padding: 2px 8px;
+      border-radius: 999px;
+      vertical-align: middle;
+      animation: pop 600ms ease-out;
+    }
+    @keyframes pop {
+      0%   { transform: scale(0.6); opacity: 0; }
+      40%  { transform: scale(1.15); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    button#flip {
+      font: inherit; font-weight: 600;
+      padding: 0.7rem 1.5rem;
+      background: var(--accent); color: var(--bg);
+      border: 0; border-radius: 10px;
+      cursor: pointer;
+      transition: transform 80ms ease, filter 80ms ease;
+      margin-top: 0.5rem;
+    }
+    button#flip:hover:not(:disabled) { filter: brightness(1.08); }
+    button#flip:active:not(:disabled) { transform: scale(0.97); }
+    button#flip:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Tally panel */
+    .tally {
+      margin-top: 2rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.5rem;
+      font-variant-numeric: tabular-nums;
+    }
+    .tally .cell { display: flex; flex-direction: column; gap: 0.15rem; align-items: center; }
+    .tally .label { color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .tally .value { font-size: 1.4rem; font-weight: 700; }
+    .tally .pct { color: var(--muted); font-size: 0.75rem; }
+    .reset {
+      margin-top: 0.25rem;
+      background: transparent; color: var(--muted);
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 0.2rem 0.6rem; font: inherit; font-size: 0.75rem;
+      cursor: pointer;
+    }
+    .reset:hover { color: var(--fg); border-color: var(--accent); }
+
+    .note { color: var(--muted); font-size: 0.75rem; margin-top: 1.25rem; }
   </style>
 </head>
 <body>
   <main>
-    <p><a href="/">← kivozo.com</a></p>
+    <p class="brand"><a href="/">← kivozo.com</a></p>
     <h1>Coin flip</h1>
-    <div class="coin" id="coin">🪙</div>
-    <p id="result">Press the button.</p>
+
+    <div class="stage" id="stage">
+      <div class="coin" id="coin">
+        <div class="face front">👑</div>
+        <div class="face back">🐢</div>
+      </div>
+    </div>
+
+    <p class="result" id="result" aria-live="polite">Press the button.</p>
     <button id="flip">Flip</button>
+
+    <div class="tally" aria-label="Session tally">
+      <div class="cell">
+        <span class="label">Heads 👑</span>
+        <span class="value" id="t-heads">0</span>
+        <span class="pct" id="p-heads">—</span>
+      </div>
+      <div class="cell">
+        <span class="label">Tails 🐢</span>
+        <span class="value" id="t-tails">0</span>
+        <span class="pct" id="p-tails">—</span>
+      </div>
+      <div class="cell">
+        <span class="label">Total</span>
+        <span class="value" id="t-total">0</span>
+        <button class="reset" id="reset" type="button">reset</button>
+      </div>
+    </div>
+
+    <p class="note">Session tally resets when you reload the page. Crypto-random.</p>
   </main>
+
   <script>
-    const coin = document.getElementById('coin');
-    const result = document.getElementById('result');
-    document.getElementById('flip').addEventListener('click', () => {
+    const stage   = document.getElementById('stage');
+    const coin    = document.getElementById('coin');
+    const result  = document.getElementById('result');
+    const flipBtn = document.getElementById('flip');
+    const tHeads  = document.getElementById('t-heads');
+    const tTails  = document.getElementById('t-tails');
+    const tTotal  = document.getElementById('t-total');
+    const pHeads  = document.getElementById('p-heads');
+    const pTails  = document.getElementById('p-tails');
+    const resetBtn = document.getElementById('reset');
+
+    // Cumulative rotation so each flip spins forward (no rewind).
+    // Front face (Heads/👑) is at angle 0; back face (Tails/🐢) at 180.
+    let rotation = 0;
+    let lastResult = null;       // 'H' | 'T' | null
+    const counts = { H: 0, T: 0 };
+    let flipping = false;
+    const DURATION = 1100;
+
+    function updateTally() {
+      const total = counts.H + counts.T;
+      tHeads.textContent = counts.H;
+      tTails.textContent = counts.T;
+      tTotal.textContent = total;
+      if (total === 0) {
+        pHeads.textContent = '—';
+        pTails.textContent = '—';
+      } else {
+        pHeads.textContent = ((counts.H / total) * 100).toFixed(0) + '%';
+        pTails.textContent = ((counts.T / total) * 100).toFixed(0) + '%';
+      }
+    }
+
+    function flip() {
+      if (flipping) return;
+      flipping = true;
+      flipBtn.disabled = true;
+
       const buf = new Uint8Array(1);
       crypto.getRandomValues(buf);
       const heads = (buf[0] & 1) === 0;
-      coin.textContent = heads ? '👑' : '🐢';
-      result.textContent = heads ? 'Heads' : 'Tails';
+      const code = heads ? 'H' : 'T';
+
+      // Always spin at least 4 full turns so the motion is obvious,
+      // then land on the right face (0° = heads, 180° = tails).
+      const targetFace = heads ? 0 : 180;
+      const currentMod = ((rotation % 360) + 360) % 360;
+      let delta = (targetFace - currentMod + 360) % 360;
+      delta += 360 * 4;
+      rotation += delta;
+      coin.style.transform = `rotateY(${rotation}deg)`;
+
+      // Flash ring — restart even when class hasn't changed so repeat flips still pulse
+      stage.classList.remove('flash');
+      void stage.offsetWidth;
+      stage.classList.add('flash');
+
+      result.innerHTML = '<span style="color:var(--muted)">spinning…</span>';
+
+      setTimeout(() => {
+        const sameAsLast = lastResult === code && counts.H + counts.T > 0;
+        const label = heads ? 'Heads' : 'Tails';
+        result.innerHTML = `${label}${sameAsLast ? ' <span class="same">again!</span>' : ''}`;
+        counts[code]++;
+        lastResult = code;
+        updateTally();
+        flipping = false;
+        flipBtn.disabled = false;
+      }, DURATION);
+    }
+
+    flipBtn.addEventListener('click', flip);
+    resetBtn.addEventListener('click', () => {
+      counts.H = 0; counts.T = 0;
+      lastResult = null;
+      updateTally();
+      result.textContent = 'Press the button.';
     });
+
+    updateTally();
   </script>
 </body>
 </html>
