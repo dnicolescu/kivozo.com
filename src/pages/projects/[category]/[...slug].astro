@@ -22,9 +22,10 @@ export async function getStaticPaths() {
 const { entry } = Astro.props;
 const { Content } = await render(entry);
 const cat = CATEGORIES[entry.data.category as CategoryKey];
+const ogSlug = `projects/${entry.id.replace(/\/index$/, '')}`;
 ---
 
-<BaseLayout title={`${entry.data.title} · kivozo.com`} description={entry.data.description}>
+<BaseLayout title={`${entry.data.title} · kivozo.com`} description={entry.data.description} ogSlug={ogSlug}>
   <p>
     <a href={`/projects/${entry.data.category}`}>← {cat.emoji} {cat.label}</a>
   </p>

@@ -20,7 +20,7 @@ function hrefFor(entry: typeof items[number]): string {
 }
 ---
 
-<BaseLayout title={`${meta.label} · kivozo.com`} description={meta.blurb}>
+<BaseLayout title={`${meta.label} · kivozo.com`} description={meta.blurb} ogSlug={`projects/${category}`}>
   <p><a href="/projects">← all projects</a></p>
   <h1>{meta.emoji} {meta.label}</h1>
   <p class="muted">{meta.blurb}</p>
