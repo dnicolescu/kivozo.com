@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Word Explorer · kivozo.com</title>
+  <meta name="description" content="Browse 84,000+ English words by prefix or suffix, with letter-by-letter filters." />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">← kivozo.com</a>
+    <div class="title">📚 Word Explorer</div>
+    <div class="stats" id="stats">loading…</div>
+  </header>
+
+  <main>
+    <section class="controls">
+      <div class="mode" role="tablist" aria-label="Search mode">
+        <button id="mode-prefix" class="mode-btn active" role="tab" aria-selected="true">
+          <span class="mode-label">starts with</span>
+          <span class="mode-hint">A → Z</span>
+        </button>
+        <button id="mode-suffix" class="mode-btn" role="tab" aria-selected="false">
+          <span class="mode-label">ends with</span>
+          <span class="mode-hint">Z → A by ending</span>
+        </button>
+      </div>
+
+      <div class="search-wrap">
+        <input
+          id="query"
+          type="search"
+          autocomplete="off"
+          autocapitalize="off"
+          autocorrect="off"
+          spellcheck="false"
+          placeholder="type letters…"
+          aria-label="Search text"
+        />
+        <button id="clear-query" class="ghost" title="Clear search">×</button>
+      </div>
+
+      <fieldset class="letter-map" aria-label="Letter filters">
+        <legend>
+          letters
+          <span class="legend-help">click: neutral → <em class="req">required</em> → <em class="forb">forbidden</em></span>
+          <button id="clear-letters" class="ghost small" type="button">reset</button>
+        </legend>
+        <div id="letters" class="letters"></div>
+      </fieldset>
+
+      <div class="active-filters" id="active-filters" aria-live="polite"></div>
+    </section>
+
+    <section class="results">
+      <div class="results-header">
+        <span id="count">—</span>
+        <span class="muted" id="sort-label"></span>
+      </div>
+      <div id="viewport" class="viewport" tabindex="0" aria-label="Word list">
+        <div id="spacer" class="spacer"></div>
+        <div id="rows" class="rows"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot muted">
+    Dictionary: engmix (mixed English, ~84k words). All filtering happens in your browser — no tracking.
+  </footer>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

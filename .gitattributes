@@ -1,0 +1,6 @@
+# Default: let git handle line endings normally
+* text=auto
+
+# Data files: keep LF so deterministic across OSes and avoid huge diffs
+*.txt text eol=lf
+*.json text eol=lf

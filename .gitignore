@@ -40,3 +40,6 @@ Thumbs.db
 *.tsbuildinfo
 coverage/
 .cache/
+
+# Scratch / raw source assets (extracted/processed copies live under public/)
+.scratch/
