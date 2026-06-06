@@ -49,7 +49,8 @@ const state = {
   ),
   cursor: { r: 0, c: 0 },
   // ---- Manual mode state ----
-  pins: ['', '', '', '', ''], // green letters per position
+  /** @type {Array<{letter:string,kind:'cor'|'pres'}|null>} per-position pin */
+  pins: [null, null, null, null, null],
   letterState: new Map(),     // a-z -> 'req' | 'forb'
 };
 
@@ -189,6 +190,9 @@ function resetBoard() {
 function buildPins() {
   els.pins.innerHTML = '';
   for (let i = 0; i < COLS; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'pin-cell';
+
     const input = document.createElement('input');
     input.className = 'pin';
     input.type = 'text';
@@ -199,10 +203,24 @@ function buildPins() {
     input.dataset.i = String(i);
     input.setAttribute('aria-label', `Pinned letter at position ${i+1}`);
     input.addEventListener('input', (e) => {
+      const prev = state.pins[i] ? state.pins[i].letter : '';
       const v = (e.target.value || '').toLowerCase().replace(/[^a-z]/g, '').slice(-1);
-      state.pins[i] = v;
       e.target.value = v;
-      e.target.classList.toggle('filled', !!v);
+      if (v) {
+        // Default to green (correct position). User can right-click to flip to yellow.
+        state.pins[i] = { letter: v, kind: 'cor' };
+        // Auto-mark the letter as required in the letters map.
+        if (state.letterState.get(v) !== 'forb') {
+          state.letterState.set(v, 'req');
+          syncLetterButton(v);
+        }
+      } else {
+        state.pins[i] = null;
+      }
+      // If we just replaced or cleared a letter, drop its auto-req mark if no
+      // other pin uses it.
+      if (prev && prev !== v) maybeUnsetLetter(prev);
+      renderPin(i);
       if (v && i < COLS - 1) {
         const next = els.pins.querySelector(`.pin[data-i="${i+1}"]`);
         if (next) next.focus();
@@ -215,16 +233,56 @@ function buildPins() {
         if (prev) prev.focus();
       }
     });
-    els.pins.appendChild(input);
+    input.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      // Right-click toggles the pin between green (correct here) and yellow
+      // (present but NOT here). Only meaningful when a letter is set.
+      const pin = state.pins[i];
+      if (!pin) return;
+      pin.kind = pin.kind === 'cor' ? 'pres' : 'cor';
+      renderPin(i);
+      compute();
+    });
+
+    cell.appendChild(input);
+    els.pins.appendChild(cell);
   }
 }
 
-function resetPins() {
-  state.pins = ['', '', '', '', ''];
-  for (const inp of els.pins.querySelectorAll('.pin')) {
-    inp.value = '';
-    inp.classList.remove('filled');
+/** True if any other pin uses this letter, OR the letter was already a req
+ *  before any pin set it (we can't tell, so we only remove auto-marks). */
+function maybeUnsetLetter(c) {
+  for (const p of state.pins) if (p && p.letter === c) return; // still used
+  if (state.letterState.get(c) === 'req') {
+    state.letterState.delete(c);
+    syncLetterButton(c);
   }
+}
+
+function syncLetterButton(c) {
+  const btn = els.letters.querySelector(`.ltr[data-c="${c}"]`);
+  if (!btn) return;
+  btn.classList.remove('req', 'forb');
+  const s = state.letterState.get(c);
+  if (s) btn.classList.add(s);
+}
+
+function renderPin(i) {
+  const inp = els.pins.querySelector(`.pin[data-i="${i}"]`);
+  if (!inp) return;
+  const pin = state.pins[i];
+  inp.value = pin ? pin.letter : '';
+  inp.classList.remove('s-cor', 's-pres');
+  if (pin) inp.classList.add('s-' + pin.kind);
+}
+
+function resetPins() {
+  // Collect every letter currently held by a pin so we can re-check whether
+  // each one should keep its auto-req mark after clearing.
+  const letters = new Set(state.pins.filter(Boolean).map(p => p.letter));
+  state.pins = [null, null, null, null, null];
+  for (const c of letters) maybeUnsetLetter(c);
+  for (let i = 0; i < COLS; i++) renderPin(i);
   compute();
 }
 
@@ -320,7 +378,15 @@ function buildConstraints() {
   } else {
     // manual mode
     for (let i = 0; i < COLS; i++) {
-      if (state.pins[i]) green[i] = state.pins[i];
+      const pin = state.pins[i];
+      if (!pin) continue;
+      if (pin.kind === 'cor') {
+        green[i] = pin.letter;
+      } else {
+        // yellow: letter is in the word but NOT at this position
+        posExcl[i].add(pin.letter);
+        minCount.set(pin.letter, Math.max(minCount.get(pin.letter) ?? 0, 1));
+      }
     }
     for (const [ltr, s] of state.letterState) {
       if (s === 'req') minCount.set(ltr, Math.max(minCount.get(ltr) ?? 0, 1));

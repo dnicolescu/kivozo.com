@@ -130,16 +130,22 @@ fieldset.pins .hint, fieldset.letter-map .hint { white-space: nowrap; }
 .letter-map em { font-style: normal; padding: 0 0.25rem; border-radius: 4px; font-weight: 600; }
 
 .pins-row { display: flex; gap: 6px; margin-top: 0.4rem; flex-wrap: wrap; }
+.pin-cell { flex: 0 0 auto; }
 .pin {
-  appearance: none;
+  appearance: none; -webkit-appearance: none;
+  box-sizing: border-box;
+  display: block;
   background: var(--card); border: 2px solid var(--border-strong); color: var(--fg);
-  width: 44px; height: 44px; padding: 0; text-align: center;
+  width: 44px; height: 44px;
+  padding: 0; margin: 0;
+  text-align: center;
   font: inherit; font-size: 1.2rem; font-weight: 700; text-transform: uppercase;
   border-radius: 6px;
-  flex: 0 0 auto;
+  outline: none;
 }
-.pin:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(124, 196, 255, 0.25); }
-.pin.filled { background: var(--good); border-color: var(--good); color: #fff; }
+.pin:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(124, 196, 255, 0.25); }
+.pin.s-cor  { background: var(--good); border-color: var(--good); color: #fff; }
+.pin.s-pres { background: var(--warn); border-color: var(--warn); color: #fff; }
 
 .letters {
   display: grid; grid-template-columns: repeat(13, minmax(0, 1fr));
