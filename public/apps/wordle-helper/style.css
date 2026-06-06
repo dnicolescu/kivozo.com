@@ -116,6 +116,10 @@ em.t-cor  { background: rgba(106, 170, 100, 0.22); color: var(--good); }
   .board-row { grid-template-columns: repeat(5, 48px); }
   .tile { width: 48px; height: 48px; font-size: 1.4rem; }
 }
+@media (max-width: 360px) {
+  .board-row { grid-template-columns: repeat(5, 42px); gap: 4px; }
+  .tile { width: 42px; height: 42px; font-size: 1.2rem; }
+}
 
 /* ---- Manual mode ---- */
 fieldset.pins, fieldset.letter-map {
@@ -129,23 +133,36 @@ fieldset.pins .hint, fieldset.letter-map .hint { white-space: nowrap; }
 .letter-map .sep { color: var(--border-strong); opacity: 0.6; }
 .letter-map em { font-style: normal; padding: 0 0.25rem; border-radius: 4px; font-weight: 600; }
 
-.pins-row { display: flex; gap: 6px; margin-top: 0.4rem; flex-wrap: wrap; }
-.pin-cell { flex: 0 0 auto; }
+.pins-row {
+  display: flex; gap: 6px; margin-top: 0.4rem; flex-wrap: wrap;
+  align-items: center;
+}
+.pin-cell {
+  flex: 0 0 auto;
+  width: 44px; height: 44px;
+  display: block;
+}
 .pin {
   appearance: none; -webkit-appearance: none;
   box-sizing: border-box;
   display: block;
-  background: var(--card); border: 2px solid var(--border-strong); color: var(--fg);
-  width: 44px; height: 44px;
+  width: 100%; height: 100%;
+  background: var(--card);
+  border: 2px solid var(--border-strong);
+  background-clip: padding-box;
+  color: var(--fg);
   padding: 0; margin: 0;
   text-align: center;
   font: inherit; font-size: 1.2rem; font-weight: 700; text-transform: uppercase;
   border-radius: 6px;
   outline: none;
+  vertical-align: middle;
+  line-height: 1;
 }
-.pin:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(124, 196, 255, 0.25); }
-.pin.s-cor  { background: var(--good); border-color: var(--good); color: #fff; }
-.pin.s-pres { background: var(--warn); border-color: var(--warn); color: #fff; }
+.pin:focus { box-shadow: 0 0 0 2px rgba(124, 196, 255, 0.45); }
+/* Keep the dark border in all states so the visible box size never changes. */
+.pin.s-cor  { background: var(--good); color: #fff; }
+.pin.s-pres { background: var(--warn); color: #fff; }
 
 .letters {
   display: grid; grid-template-columns: repeat(13, minmax(0, 1fr));
@@ -204,3 +221,24 @@ fieldset.pins .hint, fieldset.letter-map .hint { white-space: nowrap; }
   margin-left: 1px;
 }
 .empty { padding: 2rem; text-align: center; }
+
+/* ---- Mobile ---- */
+@media (max-width: 600px) {
+  main { padding: 0.75rem; gap: 0.75rem; }
+  .topbar { padding: 0.6rem 0.75rem; gap: 0.6rem; flex-wrap: wrap; }
+  .topbar .title { font-size: 0.95rem; }
+  .topbar .stats { font-size: 0.75rem; flex-basis: 100%; margin-left: 0; }
+  .options { gap: 0.75rem; }
+  .rows { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
+  .word { font-size: 0.9rem; padding: 0.35rem 0.4rem; }
+  fieldset.pins, fieldset.letter-map { padding: 0.4rem 0.6rem 0.6rem; }
+  .letters { grid-template-columns: repeat(13, minmax(0, 1fr)); gap: 3px; }
+  .ltr { padding: 0.5rem 0; font-size: 0.95rem; }
+}
+
+@media (max-width: 420px) {
+  .pin-cell { width: 38px; height: 38px; }
+  .pin { font-size: 1.05rem; }
+  .pins-row { gap: 5px; }
+  .letters { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+}
