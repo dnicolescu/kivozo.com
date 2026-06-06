@@ -30,12 +30,12 @@
 
   <main>
     <section class="mode-tabs" role="tablist" aria-label="Input mode">
-      <button id="tab-guess" class="tab active" role="tab" aria-selected="true">🎯 guesses</button>
-      <button id="tab-manual" class="tab" role="tab" aria-selected="false">🔧 manual pins</button>
+      <button id="tab-manual" class="tab active" role="tab" aria-selected="true">🔧 advanced</button>
+      <button id="tab-guess" class="tab" role="tab" aria-selected="false">🎯 guesses</button>
     </section>
 
     <!-- ===== Guess mode ===== -->
-    <section id="panel-guess" class="panel">
+    <section id="panel-guess" class="panel hidden">
       <div class="board-help">
         Type letters · click a tile to cycle <em class="t-abs">absent</em> → <em class="t-pres">present</em> → <em class="t-cor">correct</em> · right-click reverses
       </div>
@@ -45,8 +45,8 @@
       </div>
     </section>
 
-    <!-- ===== Manual mode ===== -->
-    <section id="panel-manual" class="panel hidden">
+    <!-- ===== Manual mode (advanced) ===== -->
+    <section id="panel-manual" class="panel">
       <fieldset class="pins" aria-label="Pinned letter positions">
         <legend>
           pinned positions

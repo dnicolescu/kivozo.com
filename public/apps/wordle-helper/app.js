@@ -11,11 +11,10 @@ const ROWS = 6;
 const COLS = 5;
 
 // Tile color states.
-//   ''     = untagged (typed but no color set; ignored by filter)
-//   'abs'  = absent  (gray)
+//   'abs'  = absent  (gray)   — default for any typed letter
 //   'pres' = present (yellow) — letter in word but not at this position
 //   'cor'  = correct (green)  — letter at this exact position
-const CYCLE = ['', 'abs', 'pres', 'cor'];
+const CYCLE = ['abs', 'pres', 'cor'];
 
 const els = {
   stats:           document.getElementById('stats'),
@@ -42,7 +41,7 @@ const state = {
   dict5: [],
   /** @type {Set<string>} curated possible-solution words */
   solSet: new Set(),
-  mode: /** @type {'guess'|'manual'} */ ('guess'),
+  mode: /** @type {'guess'|'manual'} */ ('manual'),
   // ---- Guess mode state ----
   /** 6×5 grid of {letter, state} */
   grid: Array.from({ length: ROWS }, () =>
@@ -115,9 +114,10 @@ function onTileClick(r, c, dir, _e) {
     renderBoard();
     return;
   }
-  // cycle color
+  // cycle color (abs -> pres -> cor -> abs)
   const idx = CYCLE.indexOf(cell.state);
-  const next = CYCLE[(idx + dir + CYCLE.length) % CYCLE.length];
+  const safeIdx = idx < 0 ? 0 : idx;
+  const next = CYCLE[(safeIdx + dir + CYCLE.length) % CYCLE.length];
   cell.state = next;
   renderBoard();
   compute();
@@ -140,7 +140,9 @@ function renderBoard() {
 function typeLetter(ch) {
   const { r, c } = state.cursor;
   if (r >= ROWS) return;
-  state.grid[r][c] = { letter: ch, state: '' };
+  // New letters default to 'absent' (gray); the player only needs to click to
+  // promote a tile to yellow/green when applicable.
+  state.grid[r][c] = { letter: ch, state: 'abs' };
   // advance cursor
   if (c < COLS - 1) state.cursor = { r, c: c + 1 };
   else if (r < ROWS - 1) state.cursor = { r: r + 1, c: 0 };
