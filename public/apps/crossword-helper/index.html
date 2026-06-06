@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crossword Helper · kivozo.com</title>
+  <meta name="description" content="Crossword pattern solver: pick a word length, pin known letters at their positions, see every matching dictionary word." />
+  <link rel="canonical" href="https://kivozo.com/apps/crossword-helper/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="kivozo.com" />
+  <meta property="og:title" content="Crossword Helper · kivozo.com" />
+  <meta property="og:description" content="Pick a word length, pin the letters you know, get every dictionary word that fits the pattern." />
+  <meta property="og:url" content="https://kivozo.com/apps/crossword-helper/" />
+  <meta property="og:image" content="https://kivozo.com/og/projects/tools/crossword-helper.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Crossword Helper · kivozo.com" />
+  <meta name="twitter:description" content="Pick a word length, pin the letters you know, get every dictionary word that fits the pattern." />
+  <meta name="twitter:image" content="https://kivozo.com/og/projects/tools/crossword-helper.png" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">← kivozo.com</a>
+    <div class="title"><a href="./" title="Refresh">🧩 Crossword Helper</a></div>
+    <div class="stats" id="stats">loading…</div>
+  </header>
+
+  <main>
+    <fieldset class="length-control" aria-label="Word length">
+      <legend>
+        length
+        <span class="hint">drag the slider or type a number</span>
+        <output id="length-val" class="length-val" for="length">5</output>
+      </legend>
+      <div class="length-row">
+        <button id="len-down" class="ghost step" type="button" aria-label="Decrease length">−</button>
+        <input id="length" type="range" min="2" max="15" value="5" aria-label="Word length" />
+        <button id="len-up" class="ghost step" type="button" aria-label="Increase length">+</button>
+      </div>
+    </fieldset>
+
+    <fieldset class="pins" aria-label="Pinned letter positions">
+      <legend>
+        pinned positions
+        <span class="hint">type letters you know · leave blank for unknown</span>
+        <button id="reset-pins" class="ghost small" type="button">reset</button>
+      </legend>
+      <div id="pins" class="pins-row"></div>
+    </fieldset>
+
+    <section class="results">
+      <div class="results-header">
+        <span id="count">—</span>
+        <span class="muted" id="count-detail"></span>
+      </div>
+      <div id="rows" class="rows" aria-live="polite"></div>
+      <div id="empty" class="empty muted hidden">no matches</div>
+    </section>
+  </main>
+
+  <footer class="foot muted">
+    Dictionary: the same merged <a href="/apps/dictionary/">Word Explorer</a> list (~380k single English words).
+    <strong>Heads up:</strong> only standalone dictionary words appear here — no proper nouns, names, places,
+    brand names, titles, phrases, hyphenated compounds, or modern slang. Crossword answers often include
+    those, and they won't show up.
+    All filtering happens in your browser.
+  </footer>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
