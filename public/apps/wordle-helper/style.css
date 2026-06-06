@@ -28,6 +28,8 @@ a:hover { text-decoration: underline; }
 }
 .topbar .brand { color: var(--muted); font-size: 0.9rem; }
 .topbar .title { font-weight: 700; }
+.topbar .title a { color: inherit; text-decoration: none; }
+.topbar .title a:hover { color: var(--accent); text-decoration: none; }
 .topbar .stats { margin-left: auto; color: var(--muted); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
 
 main {
