@@ -10,6 +10,7 @@ const els = {
   clearQuery: document.getElementById('clear-query'),
   letters: document.getElementById('letters'),
   clearLetters: document.getElementById('clear-letters'),
+  forbidAllLetters: document.getElementById('forbid-all-letters'),
   activeFilters: document.getElementById('active-filters'),
   count: document.getElementById('count'),
   sortLabel: document.getElementById('sort-label'),
@@ -362,6 +363,16 @@ function resetLetters() {
   scheduleCompute();
 }
 
+function forbidAllLetters() {
+  state.letterState.clear();
+  for (const c of ALPHA) state.letterState.set(c, 'forb');
+  for (const b of els.letters.querySelectorAll('.ltr')) {
+    b.classList.remove('req');
+    b.classList.add('forb');
+  }
+  scheduleCompute();
+}
+
 // ---------- Mode ----------
 
 function setMode(m) {
@@ -536,6 +547,7 @@ function wire() {
     scheduleCompute();
   });
   els.clearLetters.addEventListener('click', resetLetters);
+  els.forbidAllLetters.addEventListener('click', forbidAllLetters);
   els.modePrefix.addEventListener('click', () => setMode('prefix'));
   els.modeSuffix.addEventListener('click', () => setMode('suffix'));
   for (const b of els.sortButtons) {
