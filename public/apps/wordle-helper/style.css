@@ -102,7 +102,12 @@ em.t-cor  { background: rgba(106, 170, 100, 0.22); color: var(--good); }
 }
 .tile:focus { outline: none; }
 .tile:hover { border-color: var(--accent); }
-.tile.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(124, 196, 255, 0.25); }
+.tile.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(124, 196, 255, 0.25);
+  position: relative;
+  z-index: 1;
+}
 .tile.empty { color: transparent; }
 .tile.filled { transform: scale(1); }
 .tile.s-abs  { background: var(--bad);  border-color: var(--bad);  color: #fff; }
@@ -159,7 +164,11 @@ fieldset.pins .hint, fieldset.letter-map .hint { white-space: nowrap; }
   vertical-align: middle;
   line-height: 1;
 }
-.pin:focus { box-shadow: 0 0 0 2px rgba(124, 196, 255, 0.45); }
+.pin:focus {
+  box-shadow: 0 0 0 2px rgba(124, 196, 255, 0.45);
+  position: relative;
+  z-index: 1;
+}
 /* Keep the dark border in all states so the visible box size never changes. */
 .pin.s-cor  { background: var(--good); color: #fff; }
 .pin.s-pres { background: var(--warn); color: #fff; }
