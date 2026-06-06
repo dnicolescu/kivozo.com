@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wordle Helper · kivozo.com</title>
+  <meta name="description" content="Wordle solver: enter your guesses, click tiles to mark colors, see remaining candidate words instantly. Possible Wordle solutions are highlighted." />
+  <link rel="canonical" href="https://kivozo.com/apps/wordle-helper/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="kivozo.com" />
+  <meta property="og:title" content="Wordle Helper · kivozo.com" />
+  <meta property="og:description" content="Enter Wordle guesses, mark tile colors, get the list of remaining possible answers." />
+  <meta property="og:url" content="https://kivozo.com/apps/wordle-helper/" />
+  <meta property="og:image" content="https://kivozo.com/og/projects/tools/wordle-helper.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Wordle Helper · kivozo.com" />
+  <meta name="twitter:description" content="Enter Wordle guesses, mark tile colors, get the list of remaining possible answers." />
+  <meta name="twitter:image" content="https://kivozo.com/og/projects/tools/wordle-helper.png" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">← kivozo.com</a>
+    <div class="title">🟩 Wordle Helper</div>
+    <div class="stats" id="stats">loading…</div>
+  </header>
+
+  <main>
+    <section class="mode-tabs" role="tablist" aria-label="Input mode">
+      <button id="tab-guess" class="tab active" role="tab" aria-selected="true">🎯 guesses</button>
+      <button id="tab-manual" class="tab" role="tab" aria-selected="false">🔧 manual pins</button>
+    </section>
+
+    <!-- ===== Guess mode ===== -->
+    <section id="panel-guess" class="panel">
+      <div class="board-help">
+        Type letters · click a tile to cycle <em class="t-abs">absent</em> → <em class="t-pres">present</em> → <em class="t-cor">correct</em> · right-click reverses
+      </div>
+      <div id="board" class="board" aria-label="Guess board"></div>
+      <div class="panel-actions">
+        <button id="reset-board" class="ghost small" type="button">reset board</button>
+      </div>
+    </section>
+
+    <!-- ===== Manual mode ===== -->
+    <section id="panel-manual" class="panel hidden">
+      <fieldset class="pins" aria-label="Pinned letter positions">
+        <legend>
+          pinned positions
+          <span class="hint">(type a letter or leave blank)</span>
+          <button id="reset-pins" class="ghost small" type="button">reset</button>
+        </legend>
+        <div id="pins" class="pins-row"></div>
+      </fieldset>
+
+      <fieldset class="letter-map" aria-label="Letter filters">
+        <legend>
+          letters
+          <span class="hint">click: neutral → <em class="t-pres">required</em> → <em class="t-abs">forbidden</em></span>
+          <span class="sep" aria-hidden="true">|</span>
+          <span class="hint">(right-click reverses)</span>
+          <button id="reset-letters" class="ghost small" type="button">reset</button>
+        </legend>
+        <div id="letters" class="letters"></div>
+      </fieldset>
+    </section>
+
+    <section class="options">
+      <label class="checkbox">
+        <input type="checkbox" id="opt-solutions-only" />
+        <span>only show possible solutions</span>
+      </label>
+      <label class="checkbox">
+        <input type="checkbox" id="opt-solutions-first" checked />
+        <span>solutions first</span>
+      </label>
+    </section>
+
+    <section class="results">
+      <div class="results-header">
+        <span id="count">—</span>
+        <span class="muted" id="count-detail"></span>
+      </div>
+      <div id="rows" class="rows" aria-live="polite"></div>
+      <div id="empty" class="empty muted hidden">no matches</div>
+    </section>
+  </main>
+
+  <footer class="foot muted">
+    Dictionary: 5-letter slice of the merged <a href="/apps/dictionary/">Word Explorer</a> list (~12k words).
+    Solutions: a curated starter list of plausible Wordle answers — highlighted with a tooltip.
+    All filtering happens in your browser.
+  </footer>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
